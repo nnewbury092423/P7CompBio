@@ -1,3 +1,4 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/5Jr9S7AE)
 # ECE 208 Homework 7: Computing the Likelihood of Trees
 In this homework assignment, we will be implementing [Felsenstein's tree-pruning algorithm](https://en.wikipedia.org/wiki/Felsenstein%27s_tree-pruning_algorithm)<sup>1</sup> to compute the (log-)likelihood of observing DNA sequences *S* under the [General Time Reversible (GTR) model](https://en.wikipedia.org/wiki/Models_of_DNA_evolution#GTR_model_(Tavar%C3%A9_1986))<sup>2</sup> given a tree *T* with known branch lengths and topology. This is a Dynamic Programming algorithm that makes computation of the likelihood tractable.
 
