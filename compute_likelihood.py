@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+import numpy as np
+import scipy as sp
+
 ERROR_GTR_PARAMS_FILE = "Invalid GTR parameters file"
 ERROR_MSA = "Invalid multiple sequence alignment"
 ERROR_SCORE = "Invalid log-likelihood score. Must be a negative float"
@@ -16,7 +20,94 @@ def likelihood(tree, seqs, gtr_probs, gtr_rates):
     rate_CT, rate_AT, rate_GT, rate_AC, rate_CG, rate_AG = gtr_rates # You can use these if it's more convenient
     log_likelihood_score = 0. # You can modify this variable, or you can use your own; either way is fine
     # TODO Your code here
+    # generate Rate Matrix
+
+
+    AA = -(prob_G*rate_AG+ prob_C*rate_AC + prob_T*rate_AT)
+    CC  = -(prob_A*rate_AC+ prob_G*rate_CG + prob_T*rate_CT)
+    GG  = -(prob_A*rate_AG+ prob_C*rate_CG + prob_T*rate_GT)
+    TT = -(prob_A*rate_AT+ prob_G*rate_GT + prob_C*rate_CT)
+    R = np.array([[AA,prob_C*rate_AC, prob_G*rate_AG, prob_T*rate_AT],\
+                  [prob_A*rate_AC,CC, prob_G*rate_CG, prob_T*rate_CT],\
+                    [prob_A*rate_AG, prob_C*rate_CG,GG, prob_T*rate_GT],\
+                    [prob_A*rate_AT, prob_C*rate_CT, prob_G*rate_GT,TT]])
+
+    
+    #finaldict
+    # normalize R
+    #ACGT
+    d = 0
+    for i in range(len(gtr_probs)):
+         d = d - gtr_probs[i] * R[i][i]
+    row = 0
+    Rnorm = R/abs(d)
+    #import pdb; pdb.set_trace()
+
+    L = dict()
+    # initialize  leaves
+    for node in tree.traverse_postorder():
+        if node.is_leaf():
+            store = np.zeros((4,len(seqs[node.get_label()])))
+            for i,letter in enumerate(seqs[node.get_label()]):
+                if letter == 'A':
+                    store[:,i] = [1,0,0,0]
+                elif letter == 'C':
+                    store[:,i] = [0,1,0,0]
+                elif letter =='G':
+                    store[:,i] = [0,0,1,0]
+                elif letter == 'T':
+                    store[:,i] = [0,0,0,1]
+            L[node] = store
+
+
+    #other nodes
+        else:
+            prod = 1
+            for child in node.child_nodes():
+                t = child.get_edge_length() 
+                tranP = sp.linalg.expm(t*Rnorm)
+                childprobs = L[child]
+                #store = np.zeros((4,len(seqs[node.get_label()])))
+                #import pdb; pdb.set_trace()
+                prod = prod *np.matmul(tranP,childprobs)
+            L[node] = prod
+    #import pdb; pdb.set_trace()
+    
+    Likear = np.matmul(gtr_probs,L[tree.root])
+    log_likelihood_score = np.sum(np.log(Likear))
+            
+            #import pdb; pdb.set_trace()
+
+    # main recursive algorithm
+
+
+
+
+                #print('here')
+
+
+
+
+    
+    
+
+
+
     return log_likelihood_score
+
+
+def returnindex(letter):
+    if letter == 'A':
+        index = 0
+    elif letter == 'C':
+        index = 1
+    elif letter =='G':
+        index = 2
+    elif letter == 'T':
+        index = 3
+
+
+    return index
 
 def read_FASTA(filename):
     '''
