@@ -36,6 +36,7 @@ def likelihood(tree, seqs, gtr_probs, gtr_rates):
     #finaldict
     # normalize R
     #ACGT
+
     d = 0
     for i in range(len(gtr_probs)):
          d = d - gtr_probs[i] * R[i][i]
@@ -43,11 +44,14 @@ def likelihood(tree, seqs, gtr_probs, gtr_rates):
     Rnorm = R/abs(d)
     #import pdb; pdb.set_trace()
 
+
     L = dict()
-    # initialize  leaves
+    # Recursive Formula
     for node in tree.traverse_postorder():
+        # Iniitialize the leaves
         if node.is_leaf():
             store = np.zeros((4,len(seqs[node.get_label()])))
+            # Leaf sequences and probabilities are known, so we just generate matrix
             for i,letter in enumerate(seqs[node.get_label()]):
                 if letter == 'A':
                     store[:,i] = [1,0,0,0]
@@ -60,39 +64,27 @@ def likelihood(tree, seqs, gtr_probs, gtr_rates):
             L[node] = store
 
 
-    #other nodes
+    #Main recursion
         else:
             prod = 1
+            #Multiply each child node likelihood matrix together elementwise because each event is independent
             for child in node.child_nodes():
+                #calculate probability matrices
                 t = child.get_edge_length() 
                 tranP = sp.linalg.expm(t*Rnorm)
+                # find the matrix from the child node
                 childprobs = L[child]
-                #store = np.zeros((4,len(seqs[node.get_label()])))
-                #import pdb; pdb.set_trace()
+
+                # tranP * childprobs matrix multiplication fills out the elements
                 prod = prod *np.matmul(tranP,childprobs)
             L[node] = prod
-    #import pdb; pdb.set_trace()
     
+    # for the root, we do the same with the independent probabilities pi
     Likear = np.matmul(gtr_probs,L[tree.root])
+
+    # to find the total log likelihood, we take the log sum
     log_likelihood_score = np.sum(np.log(Likear))
             
-            #import pdb; pdb.set_trace()
-
-    # main recursive algorithm
-
-
-
-
-                #print('here')
-
-
-
-
-    
-    
-
-
-
     return log_likelihood_score
 
 
